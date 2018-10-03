@@ -3,20 +3,20 @@
     <div>
       <label>Email</label>
       <br>
-      <input type="text" name="email">
-      <span *ngIf="validEmail$"><small>{{emailErrorMessage}}</small></span>
+      <input type="text" [(ngModel)]="email" name="email">
+      <div *ngIf="emailErrorMessage"><small>{{emailErrorMessage}}</small></div>
     </div>
     <div>
       <label>Password</label>
       <br>
-      <input type="text" type="password" name="password">
-      <span *ngIf="validPass$"><small>{{passwordErrorMessage}}</small></span>
+      <input [(ngModel)]="password" type="password" name="password">
+      <div *ngIf="passwordErrorMessage"><small>{{passwordErrorMessage}}</small></div>
     </div>
     <div>
       <label>Confirm password</label>
       <br>
-      <input type="text" type="password" name="passwordConformation">
-      <span *ngIf="validConfirmPass$"><small>{{confirmPasswordErrorMessage}}</small></span>
+      <input [(ngModel)]="passwordConformation" type="password" name="passwordConformation">
+      <div *ngIf="confirmPasswordErrorMessage"><small>{{confirmPasswordErrorMessage}}</small></div>
     </div>
     <div>
       <button type="button" (click)="submit()">Register</button>

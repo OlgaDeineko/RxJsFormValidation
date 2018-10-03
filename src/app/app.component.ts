@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core';
-import {combineLatest, fromEvent, Observable} from 'rxjs';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {combineLatest, fromEvent} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
@@ -7,17 +7,21 @@ import {map} from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'formValidation';
+  password: string;
+  email: string;
+  passwordConformation: string;
+
   confirmPassInputSource$: any;
   emailInputSource$: any;
   passInputSource$: any;
-  validEmail$: any;
-  validPass$: any;
-  validConfirmPass$: any;
-  emailErrorMessage: string;
-  passwordErrorMessage: string;
-  confirmPasswordErrorMessage: string;
+  combineLatest$: any;
+  formValid: any;
+
+  emailErrorMessage = '';
+  passwordErrorMessage = '';
+  confirmPasswordErrorMessage = '';
 
   constructor() {
   }
@@ -26,92 +30,93 @@ export class AppComponent implements OnInit {
 
     const elEmail = document.getElementsByName('email');
     const elPassword = document.getElementsByName('password');
-    const elConfirmPassword = document.getElementsByName('password');
+    const elConfirmPassword = document.getElementsByName('passwordConformation');
+    const emailRegExp = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
 
     this.emailInputSource$ = fromEvent(elEmail, 'blur')
       .pipe(
-        map((events) => {
+        map((event) => {
           return (event.currentTarget as HTMLInputElement).value;
+        }),
+        map((input: string) => {
+          return emailRegExp.test(input);
         })
       );
 
 
     this.passInputSource$ = fromEvent(elPassword, 'blur')
       .pipe(
-        map( (events) => {
+        map((event) => {
           return (event.currentTarget as HTMLInputElement).value;
+        }),
+        map((input: string) => {
+          return input.length > 4;
         })
       );
 
 
     this.confirmPassInputSource$ = fromEvent(elConfirmPassword, 'blur')
       .pipe(
-        map( (events) => {
+        map((event) => {
           return (event.currentTarget as HTMLInputElement).value;
+        }),
+        map((input) => {
+          return input === this.password;
         })
       );
 
-    this.validEmail$ = this.emailInputSource$.map((input: string) => {
-      return input.length > 0;
-    });
-
-    this.validPass$ = this.passInputSource$.map((input) => {
-      return input.length && input.length > 4;
-    });
-
-    this.validConfirmPass$ = this.confirmPassInputSource$.map((input) => {
-      console.error(this.passInputSource$);
-      return input === this.passInputSource$;
-    });
-
-
     this.emailInputSource$.subscribe((inputValid) => {
-      if (!inputValid) {
-        console.log('wrong mail format');
-        this.emailErrorMessage = 'wrong mail format';
+      if (inputValid) {
+        this.emailErrorMessage = null;
       } else {
-        this.emailErrorMessage = '';
+        this.emailErrorMessage = 'wrong mail format';
       }
     });
 
     this.passInputSource$.subscribe((inputValid) => {
-      if (!inputValid) {
-        console.log('password too short');
-        this.passwordErrorMessage = 'password too short';
+      if (inputValid) {
+        this.passwordErrorMessage = null;
       } else {
-        this.passwordErrorMessage = '';
+        this.passwordErrorMessage = 'password too short';
       }
     });
 
     this.confirmPassInputSource$.subscribe((inputValid) => {
-      if (!inputValid) {
-        console.log('password do not match');
-        this.confirmPasswordErrorMessage = 'password do not match';
+      if (inputValid) {
+        this.confirmPasswordErrorMessage = null;
       } else {
-        this.confirmPasswordErrorMessage = '';
+        this.confirmPasswordErrorMessage = 'password do not match';
       }
     });
+
+    this.combineLatest$ = combineLatest(
+      this.emailInputSource$,
+      this.passInputSource$,
+      this.confirmPassInputSource$,
+      (s1, s2, s3) => {
+        return s1 && s2 && s3;
+      }
+    )
+      .subscribe((formValid) => {
+        this.formValid = formValid;
+      });
 
   }
 
 
   submit() {
-    console.log('click');
-    combineLatest(
-      this.emailInputSource$,
-      this.passInputSource$,
-      this.confirmPassInputSource$,
-      function (s1, s2, s3) {
-        return s1 && s2 && s3;
-      }
-    )
-      .subscribe(function (formValid) {
-        console.log(formValid);
-        if (formValid) {
-          alert('VALID');
-        } else {
-          alert('INVALID');
-        }
-      });
+    if (this.formValid) {
+      alert(`Email: ${this.email} Password:${this.password}`);
+    } else {
+      alert('Please fill all fields correctly!');
+    }
+
+  }
+
+  ngOnDestroy() {
+    this.emailInputSource$.unsubscribe();
+    this.passInputSource$.unsubscribe();
+    this.confirmPassInputSource$.unsubscribe();
+    this.combineLatest$.unsubscribe();
   }
 }
